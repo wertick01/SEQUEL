@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -80,27 +81,35 @@ func (newApp *App) BuildMainWindow() {
 
 	mainWindow.SetIcon(icon)
 
-	// label := widget.NewLabel("Hello from FYNE")
-
 	trimm := trimmomatic.Trimmomatic{
-		Params: &models.TrimmomaticParams{},
+		Params: &models.TrimmomaticParams{
+			Prefix: "java -jar",
+			Path:   "internal/tools/Trimmomatic-0.35/trimmomatic-0.35.jar",
+		},
 	}
 
-	subWindow := newApp.App.NewWindow("Choose paired reads")
-	subWindow.Resize(fyne.NewSize(500, 500))
+	var subWindow fyne.Window
 
 	chosePairedReadsBotton := widget.NewButton("Paired", func() {
-		forw, rev := trimm.SelectPairedReadsFiles(subWindow)
+		subWindow = newApp.App.NewWindow("Choose paired reads")
+		subWindow.Resize(fyne.NewSize(500, 100))
+
+		fov, rev, reads := trimm.SelectPairedReadsFiles(subWindow)
 		subWindow.SetContent(container.NewVBox(
-			forw, rev,
+			reads,
+			fov, rev,
 		))
 		subWindow.Show()
 	})
 
 	choseSingleReadsBotton := widget.NewButton("Single", func() {
-		single := trimm.SelectSingleReadsFiles(subWindow)
+		subWindow = newApp.App.NewWindow("Choose paired reads")
+		subWindow.Resize(fyne.NewSize(500, 100))
+
+		selected, frm := trimm.SelectSingleReadsFiles(subWindow)
 		subWindow.SetContent(container.NewVBox(
-			single,
+			frm,
+			selected,
 		))
 		subWindow.Show()
 	})
@@ -113,7 +122,7 @@ func (newApp *App) BuildMainWindow() {
 	)
 	tabs.SetTabLocation(container.TabLocationLeading)
 
-	newForm := CreateNewResearchForm(newApp)
+	newForm := CreateNewResearchForm(newApp, mainWindow)
 
 	// a, err := trimm.ReadParams()
 	// if err != nil {
@@ -140,20 +149,56 @@ func CreateTrimmomaticContainer(paired, single *widget.Button) *fyne.Container {
 	return container
 }
 
-func CreateNewResearchForm(newApp *App) *widget.Form {
+func CreateNewResearchForm(newApp *App, window fyne.Window) *widget.Form {
 	userName := widget.NewEntry()
-	currentTime := time.Now().Format("2017-09-07 17:06:06")
+	// userNameLabel := widget.NewLabel("")
+
+	currentTime := time.Now().Format(time.DateTime)
 	currentDateTime := widget.NewEntryWithData(binding.BindString(&currentTime))
+	// currentDateTimeLabel := widget.NewLabel("")
+
 	researchName := widget.NewEntry()
+	// researchNameLabel := widget.NewLabel("")
+
+	outputDataFolderPath := ""
+	outputDataFolder := widget.NewButton("Chose Output Dir", func() {
+		dialog.ShowFolderOpen(
+			func(r fyne.ListableURI, err error) {
+				if r != nil {
+					outputDataFolderPath = r.Path()
+					// forwardSelected.SetText(r.URI().Path())
+				}
+			},
+			window,
+		)
+	})
+	// outputDataFolderLabel := widget.NewLabel("")
 
 	form := widget.NewForm(
 		widget.NewFormItem("Research Name", researchName),
 		widget.NewFormItem("Current Date", currentDateTime),
 		widget.NewFormItem("User Name", userName),
+		widget.NewFormItem("Output Data Folder", outputDataFolder),
 	)
 
 	form.OnSubmit = func() {
-		log.Println("Submited")
+		switch {
+		case len(researchName.Text) <= 0:
+			researchName.SetText("Research Name Is Empty.")
+		case len(currentDateTime.Text) <= 0:
+			currentDateTime.SetText("Date Is Empty.")
+		case len(userName.Text) <= 0:
+			userName.SetText("User Name Is Empty.")
+		case len(outputDataFolderPath) <= 0:
+			buttonIcon, err := fyne.LoadResourceFromPath("images/warning.png")
+			if err != nil {
+				log.Println(err)
+			}
+			outputDataFolder.SetIcon(buttonIcon)
+			// default:
+			// 	window.Close()
+		}
+		log.Println(researchName.Text, currentDateTime.Text, userName.Text)
 	}
 
 	form.OnCancel = func() {
