@@ -5,10 +5,12 @@ import (
 )
 
 type TrimmomaticParams struct {
+	Prefix    string
 	Path      string
 	Input     string
 	Output    string
 	Paired    string
+	Logfile   string
 	Phred     int
 	Threads   int
 	SubParams *TrimmomaticSubParams
@@ -17,10 +19,11 @@ type TrimmomaticParams struct {
 func (params *TrimmomaticParams) Validate() error {
 	return validation.ValidateStruct(
 		params,
+		validation.Field(&params.Prefix, validation.Required),
 		validation.Field(&params.Path, validation.Required),
 		validation.Field(&params.Input, validation.Required),
 		validation.Field(&params.Output, validation.Required),
-		validation.Field(&params.Paired, validation.Required),
+		// validation.Field(&params.Paired, validation.Required),
 		validation.Field(&params.Paired, validation.Required),
 		validation.Field(&params.Phred, validation.Required),
 		validation.Field(&params.Threads, validation.Required),

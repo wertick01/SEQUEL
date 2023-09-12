@@ -2,9 +2,9 @@ package trimmomatic
 
 import (
 	"biolink-gui/internal/models"
-	"log"
-	"strconv"
 
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -18,58 +18,72 @@ type Trimmomatic struct {
 	Paired  *widget.RadioGroup
 }
 
-func (trimm *Trimmomatic) ReadParams() *widget.Button {
+// func (trimm *Trimmomatic) ReadParams() (*widget.Button, error) {
+// 	reads := map[string]string{
+// 		"Paired": "PE",
+// 		"Single": "SE",
+// 	}
 
-	reads := map[string]string{
-		"Paired": "PE",
-		"Single": "SE",
-	}
+// 	var newErr error
 
-	trimm.Path = widget.NewEntry()
-	trimm.Path.SetPlaceHolder("Trimmomatic path:")
+// 	botton := widget.NewButton("GO", func() {
+// 		phred, err := strconv.Atoi(trimm.Phred.Text)
+// 		if err != nil {
+// 			newErr = err
+// 		}
+// 		trimm.Params.Phred = phred
 
-	trimm.Input = widget.NewEntry()
-	trimm.Input.SetPlaceHolder("Input file path:")
+// 		threads, err := strconv.Atoi(trimm.Threads.Text)
+// 		if err != nil {
+// 			newErr = err
+// 		}
+// 		trimm.Params.Threads = threads
 
-	trimm.Output = widget.NewEntry()
-	trimm.Output.SetPlaceHolder("Output file path:")
+// 		trimm.Params.Path = trimm.Path.Text
+// 		trimm.Params.Input = trimm.Input.Text
+// 		trimm.Params.Output = trimm.Output.Text
+// 		trimm.Params.Paired = reads[trimm.Paired.Selected]
+// 		log.Println(trimm.Params)
+// 	})
 
-	trimm.Paired = widget.NewRadioGroup([]string{"Paired", "Single"}, func(b string) {})
-	// entryPaired.
-	// entryPaired.SetPlaceHolder("Is paired:")
-	// entryPaired.
+// 	return botton, newErr
+// }
 
-	trimm.Phred = widget.NewEntry()
-	trimm.Phred.SetPlaceHolder("Phred:")
+func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window) (*widget.Button, *widget.Button) {
+	trimm.Params.Input = ""
 
-	trimm.Threads = widget.NewEntry()
-	trimm.Threads.SetPlaceHolder("Threads:")
-
-	// res := widget.NewLabel("")
-	log.Println(1)
-
-	createRunCommand := widget.NewButton("GO", func() {
-		phred, err := strconv.Atoi(trimm.Phred.Text)
-		if err != nil {
-			log.Println("ERR")
-		}
-		trimm.Params.Phred = phred
-
-		threads, err := strconv.Atoi(trimm.Threads.Text)
-		if err != nil {
-			log.Println("ERR")
-		}
-		trimm.Params.Threads = threads
-
-		trimm.Params.Path = trimm.Path.Text
-		trimm.Params.Input = trimm.Input.Text
-		trimm.Params.Output = trimm.Output.Text
-		trimm.Params.Paired = reads[trimm.Paired.Selected]
-
-		log.Println(trimm.Params)
+	choseForwardReadsBotton := widget.NewButton("Forward reads", func() {
+		dialog.ShowFileOpen(
+			func(r fyne.URIReadCloser, err error) {
+				trimm.Params.Input += r.URI().Path() + " "
+			},
+			window,
+		)
 	})
 
-	log.Println(3)
+	choseReverseReadsBotton := widget.NewButton("Reverse reads", func() {
+		dialog.ShowFileOpen(
+			func(r fyne.URIReadCloser, err error) {
+				trimm.Params.Input += r.URI().Path()
+			},
+			window,
+		)
+	})
 
-	return createRunCommand
+	return choseForwardReadsBotton, choseReverseReadsBotton
+}
+
+func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window) *widget.Button {
+	trimm.Params.Input = ""
+
+	choseReadsBotton := widget.NewButton("Reads", func() {
+		dialog.ShowFileOpen(
+			func(r fyne.URIReadCloser, err error) {
+				trimm.Params.Input += r.URI().Path() + " "
+			},
+			window,
+		)
+	})
+
+	return choseReadsBotton
 }
