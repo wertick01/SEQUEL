@@ -27,7 +27,7 @@ func (params *TrimmomaticParams) Validate() error {
 		validation.Field(&params.Paired, validation.Required),
 		validation.Field(&params.Phred, validation.Required),
 		validation.Field(&params.Threads, validation.Required),
-		validation.Field(params.SubParams, validation.Required),
+		// validation.Field(params.SubParams, validation.Required),
 	)
 }
 

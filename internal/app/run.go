@@ -122,7 +122,7 @@ func (newApp *App) BuildMainWindow() {
 	)
 	tabs.SetTabLocation(container.TabLocationLeading)
 
-	newForm := CreateNewResearchForm(newApp, mainWindow)
+	newForm := CreateNewResearchForm(newApp, mainWindow, &trimm)
 
 	// a, err := trimm.ReadParams()
 	// if err != nil {
@@ -149,7 +149,7 @@ func CreateTrimmomaticContainer(paired, single *widget.Button) *fyne.Container {
 	return container
 }
 
-func CreateNewResearchForm(newApp *App, window fyne.Window) *widget.Form {
+func CreateNewResearchForm(newApp *App, window fyne.Window, trimm *trimmomatic.Trimmomatic) *widget.Form {
 	userName := widget.NewEntry()
 	// userNameLabel := widget.NewLabel("")
 
@@ -195,8 +195,9 @@ func CreateNewResearchForm(newApp *App, window fyne.Window) *widget.Form {
 				log.Println(err)
 			}
 			outputDataFolder.SetIcon(buttonIcon)
-			// default:
-			// 	window.Close()
+		default:
+			log.Println(trimm.BuildMainCommand())
+			window.Close()
 		}
 		log.Println(researchName.Text, currentDateTime.Text, userName.Text)
 	}
