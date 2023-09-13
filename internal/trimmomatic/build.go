@@ -2,6 +2,7 @@ package trimmomatic
 
 import (
 	"fmt"
+	"log"
 )
 
 func (trimm *Trimmomatic) BuildMainCommand() (string, error) {
@@ -12,6 +13,7 @@ func (trimm *Trimmomatic) BuildMainCommand() (string, error) {
 	if err := trimm.Params.Validate(); err != nil {
 		return "", err
 	}
+	log.Println(trimm.Params)
 
 	return fmt.Sprintf(
 		"%v %v %v -phred%v -threads %v %v %v",

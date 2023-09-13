@@ -1,7 +1,7 @@
 package trimmomatic
 
 import (
-	"biolink-gui/internal/models"
+	"biolink-nipt-gui/internal/models"
 	"fmt"
 	"log"
 
@@ -19,37 +19,6 @@ type Trimmomatic struct {
 	Threads *widget.Entry
 	Paired  *widget.RadioGroup
 }
-
-// func (trimm *Trimmomatic) ReadParams() (*widget.Button, error) {
-// 	reads := map[string]string{
-// 		"Paired": "PE",
-// 		"Single": "SE",
-// 	}
-
-// 	var newErr error
-
-// 	botton := widget.NewButton("GO", func() {
-// 		phred, err := strconv.Atoi(trimm.Phred.Text)
-// 		if err != nil {
-// 			newErr = err
-// 		}
-// 		trimm.Params.Phred = phred
-
-// 		threads, err := strconv.Atoi(trimm.Threads.Text)
-// 		if err != nil {
-// 			newErr = err
-// 		}
-// 		trimm.Params.Threads = threads
-
-// 		trimm.Params.Path = trimm.Path.Text
-// 		trimm.Params.Input = trimm.Input.Text
-// 		trimm.Params.Output = trimm.Output.Text
-// 		trimm.Params.Paired = reads[trimm.Paired.Selected]
-// 		log.Println(trimm.Params)
-// 	})
-
-// 	return botton, newErr
-// }
 
 func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window) (*widget.Label, *widget.Label, *widget.Form) {
 	trimm.Params.Input = ""
