@@ -20,11 +20,15 @@ type Trimmomatic struct {
 	Paired  *widget.RadioGroup
 }
 
-func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window) (*widget.Label, *widget.Label, *widget.Form) {
+func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan chan string, exitTerminat chan bool) (*widget.Label, *widget.Label, *widget.Form) {
 	trimm.Params.Input = ""
 	forwardInput, reverseInput := "", ""
 	forwardSelected := widget.NewLabel("")
 	reverseSelected := widget.NewLabel("")
+
+	forwardChan := make(chan bool, 1)
+	reverseChan := make(chan bool, 1)
+	exitRutine := make(chan bool, 1)
 
 	forwardButton := widget.NewButton("Forward Reads", func() {
 		dialog.ShowFileOpen(
@@ -32,6 +36,11 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window) (*widget.La
 				if r != nil {
 					forwardInput += r.URI().Path()
 					forwardSelected.SetText(r.URI().Path())
+					if len(forwardInput) > 0 {
+						forwardChan <- true
+					} else {
+						forwardChan <- false
+					}
 				}
 			},
 			window,
@@ -44,11 +53,40 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window) (*widget.La
 				if r != nil {
 					reverseInput += r.URI().Path()
 					reverseSelected.SetText(r.URI().Path())
+					if len(reverseInput) > 0 {
+						reverseChan <- true
+					} else {
+						reverseChan <- false
+					}
 				}
 			},
 			window,
 		)
 	})
+
+	go func() {
+		for {
+			select {
+			case <-forwardChan:
+				buttonIcon, err := fyne.LoadResourceFromPath("images/accept.png")
+				if err != nil {
+					log.Println(err)
+				}
+				forwardButton.SetIcon(buttonIcon)
+			case <-reverseChan:
+				buttonIcon, err := fyne.LoadResourceFromPath("images/accept.png")
+				if err != nil {
+					log.Println(err)
+				}
+				reverseButton.SetIcon(buttonIcon)
+			case <-exitRutine:
+				close(forwardChan)
+				close(reverseChan)
+				close(exitRutine)
+				return
+			}
+		}
+	}()
 
 	choseReadsForm := widget.NewForm(
 		widget.NewFormItem("Select input forward file", forwardButton),
@@ -72,7 +110,13 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window) (*widget.La
 			reverseButton.SetIcon(buttonIcon)
 			reverseSelected.SetText("Field is empty. Please, chose input data file.")
 		default:
+			exitRutine <- true
 			trimm.Params.Input = fmt.Sprintf("%v %v", forwardInput, reverseInput)
+			cmnd, err := trimm.BuildMainCommand()
+			if err != nil {
+				log.Println(err)
+			}
+			commandChan <- cmnd
 			window.Close()
 		}
 	}
@@ -84,7 +128,7 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window) (*widget.La
 	return forwardSelected, reverseSelected, choseReadsForm
 }
 
-func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window) (*widget.Label, *widget.Form) {
+func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan chan string, exitTerminat chan bool) (*widget.Label, *widget.Form) {
 	trimm.Params.Input = ""
 	selected := widget.NewLabel("")
 

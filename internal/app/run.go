@@ -87,17 +87,23 @@ func (newApp *App) BuildMainWindow() {
 		},
 	}
 
-	// trimCont := CreateTrimmomaticContainer(chosePairedReadsBotton, choseSingleReadsBotton)
-	// anotherCont := CreateAnotherContainer(chosePairedReadsBotton, choseSingleReadsBotton)
-	// tabs := container.NewAppTabs(
-	// 	container.NewTabItem("Trimmomatic", trimCont),
-	// 	container.NewTabItem("Another Trimmomatic", anotherCont),
-	// )
-	// tabs.SetTabLocation(container.TabLocationLeading)
+	commandsChan := make(chan string)
+	closeTerminal := make(chan bool, 1)
+	defer close(commandsChan)
+	defer close(closeTerminal)
 
-	menu := CreateMainMenu(mainWindow, &trimm, newApp)
+	// testLabel := widget.NewLabel("theLabel")
+	// testLabel2 := widget.NewLabel("theLabel2")
+	// testContainer := container.NewVScroll(testLabel)
+	// testContainer := fyne.NewContainerWithLayout(layout.NewBorderLayout(testLabel2, testLabel, nil, nil), testLabel, testLabel2)
+	// testContainer.Offset = fyne.NewPos(700.0, 700.0)
+	// log.Println(testContainer.Offset.AddXY(700.0, 700.0))
+	// testContainer.Resize(fyne.NewSize(float32(displays[0]["X"])*0.9, float32(displays[0]["Y"])*0.2))
+
+	menu := CreateMainMenu(mainWindow, &trimm, newApp, commandsChan, closeTerminal, displays)
 
 	mainWindow.SetMainMenu(menu)
+	// mainWindow.SetContent(testContainer)
 	mainWindow.Show()
 	mainWindow.SetMaster()
 	newApp.App.Run()

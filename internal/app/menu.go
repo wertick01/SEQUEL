@@ -2,6 +2,7 @@ package app
 
 import (
 	"biolink-nipt-gui/internal/trimmomatic"
+	"fmt"
 	"log"
 	"time"
 
@@ -12,10 +13,18 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func CreateMainMenu(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App) *fyne.MainMenu {
+func CreateMainMenu(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool, displays map[int]map[string]int) *fyne.MainMenu {
 	fileMenu := CreateFileItems(window, trimm, newApp)
-	analysisMenu := CreateAnalysisItems(window, trimm, newApp)
-	menu := fyne.NewMainMenu(fileMenu, analysisMenu)
+	analysisMenu := CreateAnalysisItems(window, trimm, newApp, commandChan, exitTerminal)
+
+	// commandsChan := make(chan string)
+	// closeTerminal := make(chan bool, 1)
+	// defer close(commandsChan)
+	// defer close(closeTerminal)
+
+	terminalMenu := CreateTerminalItems(window, trimm, newApp, commandChan, exitTerminal, float32(displays[0]["X"])*0.9, float32(displays[0]["Y"])*0.2)
+
+	menu := fyne.NewMainMenu(fileMenu, analysisMenu, terminalMenu)
 	return menu
 }
 
@@ -80,14 +89,14 @@ func CreateFileItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp 
 	return fileMenu
 }
 
-func CreateAnalysisItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App) *fyne.Menu {
+func CreateAnalysisItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool) *fyne.Menu {
 	var subWindow fyne.Window
 
 	pairedReads := fyne.NewMenuItem("Paired reads", func() {
 		subWindow = newApp.App.NewWindow("Choose paired reads")
 		subWindow.Resize(fyne.NewSize(500, 300))
 
-		fov, rev, reads := trimm.SelectPairedReadsFiles(subWindow)
+		fov, rev, reads := trimm.SelectPairedReadsFiles(subWindow, commandChan, exitTerminal)
 		subWindow.SetContent(container.NewVBox(
 			reads,
 			fov, rev,
@@ -100,7 +109,7 @@ func CreateAnalysisItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, new
 		subWindow = newApp.App.NewWindow("Choose single reads")
 		subWindow.Resize(fyne.NewSize(500, 300))
 
-		selected, frm := trimm.SelectSingleReadsFiles(subWindow)
+		selected, frm := trimm.SelectSingleReadsFiles(subWindow, commandChan, exitTerminal)
 		subWindow.SetContent(container.NewVBox(
 			frm,
 			selected,
@@ -175,4 +184,54 @@ func CreateNewResearchForm(newApp *App, window fyne.Window, trimm *trimmomatic.T
 	}
 
 	return form
+}
+
+func CreateTerminalItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool, X, Y float32) *fyne.Menu {
+	createNewTerminal := fyne.NewMenuItem("Create", func() {
+		terminal := CreateNewTerminalWindow(newApp, commandChan, exitTerminal)
+		terminal.Resize(fyne.NewSize(X, Y))
+		terminal.Show()
+	})
+
+	selTerminalParams := fyne.NewMenuItem("Create (TODO)", func() {
+		terminal := CreateNewTerminalWindow(newApp, commandChan, exitTerminal)
+		terminal.Resize(fyne.NewSize(X, Y))
+	})
+
+	terminalMenuItem := fyne.NewMenuItem("Terminal", func() {})
+	terminalMenuItem.ChildMenu = fyne.NewMenu("Terminal (TODO)", createNewTerminal, selTerminalParams)
+
+	terminalMenu := fyne.NewMenu("Terminal", terminalMenuItem)
+
+	return terminalMenu
+}
+
+func CreateNewTerminalWindow(newApp *App, commandsChan chan string, exitRutine chan bool) fyne.Window {
+	terminal := newApp.App.NewWindow("Terminal")
+	// terminal.
+	commandLabel := widget.NewMultiLineEntry()
+
+	go func() {
+		for {
+			select {
+			case command := <-commandsChan:
+				if len(command) > 0 {
+					commandLabel.Text = fmt.Sprintf("%v> %v\n", commandLabel.Text, command)
+					terminal.SetContent(commandLabel)
+				}
+			// case <-reverseChan:
+			// 	buttonIcon, err := fyne.LoadResourceFromPath("images/accept.png")
+			// 	if err != nil {
+			// 		log.Println(err)
+			// 	}
+			// 	reverseButton.SetIcon(buttonIcon)
+			case <-exitRutine:
+				close(commandsChan)
+				close(exitRutine)
+				return
+			}
+		}
+	}()
+
+	return terminal
 }
