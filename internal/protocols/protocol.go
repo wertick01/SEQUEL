@@ -1,4 +1,4 @@
-package main
+package protocol
 
 import (
 	"io/ioutil"
@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type StageDescription struct {
+type Stage struct {
 	Number      int    `yaml:"number"`
 	Name        string `yaml:"name"`
 	Params      string `yaml:"params"`
@@ -18,16 +18,12 @@ type StageDescription struct {
 	ToolPath    string `yaml:"toolPath"`
 }
 
-type Stage struct {
-	Stage *StageDescription `yaml:"stage"`
-}
-
 type Protocol struct {
-	Version   string              `yaml:"version"`
-	Author    string              `yaml:"author"`
-	Stages    []*StageDescription `yaml:"stages"`
-	CreatedAt time.Time           `yaml:"createdAt"`
-	UpdatedAt time.Time           `yaml:"updatedAt"`
+	Version   string    `yaml:"version"`
+	Author    string    `yaml:"author"`
+	Stages    []*Stage  `yaml:"stages"`
+	CreatedAt time.Time `yaml:"createdAt"`
+	UpdatedAt time.Time `yaml:"updatedAt"`
 }
 
 func main() {

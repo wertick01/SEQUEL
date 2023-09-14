@@ -20,6 +20,11 @@ type Trimmomatic struct {
 	Paired  *widget.RadioGroup
 }
 
+func (trimm *Trimmomatic) CreateTrimmomaticWindow() fyne.Window {
+
+	return nil
+}
+
 func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan chan string, exitTerminat chan bool) (*widget.Label, *widget.Label, *widget.Form) {
 	trimm.Params.Input = ""
 	forwardInput, reverseInput := "", ""
@@ -112,12 +117,12 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan
 		default:
 			exitRutine <- true
 			trimm.Params.Input = fmt.Sprintf("%v %v", forwardInput, reverseInput)
+			window.Close()
 			cmnd, err := trimm.BuildMainCommand()
 			if err != nil {
 				log.Println(err)
 			}
 			commandChan <- cmnd
-			window.Close()
 		}
 	}
 
