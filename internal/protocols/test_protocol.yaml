@@ -1,0 +1,18 @@
+version: "1.0.0"
+author: "Pavel"
+stages:
+  - stage: 
+    number: 1
+    name: "Quality Control visualization"
+    params: "fastqc -t 6 *.fq"
+    tool: "fastqc"
+    description: "description of the fastqc stage"
+    toolPath: "/home/mrred/fastqc"
+  - stage:
+    number: 2
+    name: "Trimming reads with bad quality"
+    params: "java -jar trimmomatic-0.35.jar SE -phred33 input.fq.gz output.fq.gz ILLUMINACLIP:TruSeq3-SE:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+    tool: "Trimmomatic-0.35"
+    toolPath: "internal/tools/Trimmomatic-0.35"
+createdAt: "2022-12-15T02:59:43.1Z"
+updatedAt: "2023-07-15T02:59:43.1Z"

@@ -92,6 +92,14 @@ func CreateFileItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp 
 func CreateAnalysisItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool) *fyne.Menu {
 	var subWindow fyne.Window
 
+	trymmomaticTool := CreateTrimmomaticAnalysisItems(subWindow, trimm, newApp, commandChan, exitTerminal)
+
+	analysisMenu := fyne.NewMenu("Analysis", trymmomaticTool)
+
+	return analysisMenu
+}
+
+func CreateTrimmomaticAnalysisItems(subWindow fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool) *fyne.MenuItem {
 	pairedReads := fyne.NewMenuItem("Paired reads", func() {
 		subWindow = newApp.App.NewWindow("Choose paired reads")
 		subWindow.Resize(fyne.NewSize(500, 300))
@@ -118,12 +126,16 @@ func CreateAnalysisItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, new
 		subWindow.Show()
 	})
 
+	trymmomatic035Tool := fyne.NewMenuItem("Trimmomatic-0.35", nil)
+	trymmomatic035Tool.ChildMenu = fyne.NewMenu("", pairedReads, singleReads)
+
+	trymmomatic039Tool := fyne.NewMenuItem("Trimmomatic-0.39", nil)
+	trymmomatic039Tool.ChildMenu = fyne.NewMenu("", pairedReads)
+
 	trymmomaticTool := fyne.NewMenuItem("Trimmomatic", nil)
-	trymmomaticTool.ChildMenu = fyne.NewMenu("Trimmomatic-0.35", pairedReads, singleReads)
+	trymmomaticTool.ChildMenu = fyne.NewMenu("", trymmomatic035Tool, trymmomatic039Tool)
 
-	analysisMenu := fyne.NewMenu("Analysis", trymmomaticTool)
-
-	return analysisMenu
+	return trymmomaticTool
 }
 
 func CreateNewResearchForm(newApp *App, window fyne.Window, trimm *trimmomatic.Trimmomatic) *widget.Form {
