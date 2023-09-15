@@ -15,23 +15,14 @@ func CreateTerminalWindow(newApp *App, commandsChan chan string, exitRutine chan
 		newApp.App.Quit()
 	}()
 
-	// command := ""
-
 	go func() {
 		for {
 			select {
 			case command := <-commandsChan:
 				if len(command) > 0 {
-					// commandLabel.Text = fmt.Sprintf("%v> %v\n", commandLabel.Text, command)
-					t.Write([]byte(command))
+					t.Write([]byte(command + "\n"))
 					// t.
 				}
-			// case <-reverseChan:
-			// 	buttonIcon, err := fyne.LoadResourceFromPath("images/accept.png")
-			// 	if err != nil {
-			// 		log.Println(err)
-			// 	}
-			// 	reverseButton.SetIcon(buttonIcon)
 			case <-exitRutine:
 				close(commandsChan)
 				close(exitRutine)
@@ -39,11 +30,6 @@ func CreateTerminalWindow(newApp *App, commandsChan chan string, exitRutine chan
 			}
 		}
 	}()
-
-	// newVBox1 := container.NewVBox(t)
-	// newVBox1.Resize(fyne.NewSize(X, Y))
-	// newVBox1.Move(fyne.NewPos(0, 100))
-	// window.SetContent(newVBox1)
 
 	return terminalWindow
 }

@@ -22,9 +22,11 @@ func CreateMainMenu(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *
 
 	// newVBox2 := container.NewVBox()
 
-	terminalMenu := CreateTerminalItems(window, trimm, newApp, commandChan, exitTerminal, float32(displays[0]["X"])*0.9, float32(displays[0]["Y"])*0.2)
+	terminalMenu := CreateTerminalItems(window, newApp, commandChan, exitTerminal, float32(displays[0]["X"])*0.9, float32(displays[0]["Y"])*0.2)
 
-	menu := fyne.NewMainMenu(fileMenu, analysisMenu, terminalMenu)
+	timeMenu := CreateTimeItems(newApp)
+
+	menu := fyne.NewMainMenu(fileMenu, analysisMenu, terminalMenu, timeMenu)
 	return menu
 }
 
@@ -87,33 +89,3 @@ func CreateNewResearchForm(newApp *App, window fyne.Window, trimm *trimmomatic.T
 
 	return form
 }
-
-// func CreateNewTerminalWindow(newApp *App, commandsChan chan string, exitRutine chan bool) fyne.Window {
-// 	terminal := newApp.App.NewWindow("Terminal")
-// 	// terminal.
-// 	commandLabel := widget.NewMultiLineEntry()
-
-// 	go func() {
-// 		for {
-// 			select {
-// 			case command := <-commandsChan:
-// 				if len(command) > 0 {
-// 					commandLabel.Text = fmt.Sprintf("%v> %v\n", commandLabel.Text, command)
-// 					terminal.SetContent(commandLabel)
-// 				}
-// 			// case <-reverseChan:
-// 			// 	buttonIcon, err := fyne.LoadResourceFromPath("images/accept.png")
-// 			// 	if err != nil {
-// 			// 		log.Println(err)
-// 			// 	}
-// 			// 	reverseButton.SetIcon(buttonIcon)
-// 			case <-exitRutine:
-// 				close(commandsChan)
-// 				close(exitRutine)
-// 				return
-// 			}
-// 		}
-// 	}()
-
-// 	return terminal
-// }

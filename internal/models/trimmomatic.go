@@ -5,15 +5,16 @@ import (
 )
 
 type TrimmomaticParams struct {
-	Prefix    string
-	Path      string
-	Input     string
-	Output    string
-	Paired    string
-	Logfile   string
-	Phred     int
-	Threads   int
-	SubParams *TrimmomaticSubParams
+	Prefix     string
+	Path       string
+	Input      string
+	Output     string
+	Paired     string
+	Logfile    string
+	BaseOutput bool
+	Phred      int
+	Threads    int
+	SubParams  *TrimmomaticSubParams
 }
 
 func (params *TrimmomaticParams) Validate() error {
@@ -33,12 +34,12 @@ func (params *TrimmomaticParams) Validate() error {
 
 type TrimmomaticSubParams struct {
 	IlluminaClip  string
-	Leading       int64
-	Trailing      int64
-	MinLen        int64
-	Crop          int64
-	HedaCrop      int64
-	SlidingWindow [2]int64
+	SlidingWindow string
+	Leading       string
+	Trailing      string
+	MinLen        string
+	Crop          string
+	HeadCrop      string
 }
 
 // func (params *TrimmomaticSubParams) Validate() error {

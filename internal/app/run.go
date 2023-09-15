@@ -23,43 +23,6 @@ func NewAppStruct() *App {
 	}
 }
 
-// func Run() {
-// 	newApp := NewAppStruct()
-// 	windowName := newApp.App.NewWindow("App")
-// 	windowName.Resize(fyne.NewSize(400, 320))
-
-// 	icon, err := fyne.LoadResourceFromPath("images/icon.png")
-// 	if err != nil {
-// 		log.Println(err)
-// 	}
-
-// 	windowName.SetIcon(icon)
-
-// 	label := widget.NewLabel("Hello from FYNE")
-
-// 	trimm := trimmomatic.Trimmomatic{
-// 		Params: &models.TrimmomaticParams{},
-// 	}
-
-// 	// btn, for, rev :=
-// 	a, b, c := trimm.ReadParams(windowName)
-
-// 	windowName.SetContent(container.NewVBox(
-// 		label,
-// 		trimm.Path,
-// 		// trimm.Input,
-// 		trimm.Output,
-// 		trimm.Paired,
-// 		trimm.Phred,
-// 		trimm.Threads,
-// 		a, b, c,
-// 	))
-
-// 	// log.Println(trimm.Params.Path)
-
-// 	windowName.ShowAndRun()
-// }
-
 func Run() {
 	newApp := NewAppStruct()
 
@@ -83,7 +46,7 @@ func (newApp *App) BuildMainWindow() {
 	trimm := trimmomatic.Trimmomatic{
 		Params: &models.TrimmomaticParams{
 			Prefix: "java -jar",
-			Path:   "internal/tools/Trimmomatic-0.35/trimmomatic-0.35.jar",
+			Path:   "/home/mrred/'Рабочий стол'/Работа/nipt-gui/internal/tools/Trimmomatic-0.35/trimmomatic-0.35.jar",
 		},
 	}
 

@@ -3,10 +3,12 @@ package app
 import (
 	"biolink-nipt-gui/internal/trimmomatic"
 	"log"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/widget"
 )
 
 func CreateFileItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App) *fyne.Menu {
@@ -83,9 +85,10 @@ func CreateAnalysisItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, new
 func CreateTrimmomaticAnalysisItems(subWindow fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool) *fyne.MenuItem {
 	pairedReads := fyne.NewMenuItem("Paired reads", func() {
 		subWindow = newApp.App.NewWindow("Choose paired reads")
-		subWindow.Resize(fyne.NewSize(500, 300))
+		subWindow.Resize(fyne.NewSize(1000, 700))
 
 		fov, rev, reads := trimm.SelectPairedReadsFiles(subWindow, commandChan, exitTerminal)
+		// phredFormItem := trimm.ChosePhred()
 		subWindow.SetContent(container.NewVBox(
 			reads,
 			fov, rev,
@@ -103,6 +106,8 @@ func CreateTrimmomaticAnalysisItems(subWindow fyne.Window, trimm *trimmomatic.Tr
 			frm,
 			selected,
 		))
+		// rect := canvas.NewRectangle(color.White)
+		// subWindow.SetContent(rect)
 		subWindow.CenterOnScreen()
 		subWindow.Show()
 	})
@@ -119,16 +124,47 @@ func CreateTrimmomaticAnalysisItems(subWindow fyne.Window, trimm *trimmomatic.Tr
 	return trymmomaticTool
 }
 
-func CreateTerminalItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool, X, Y float32) *fyne.Menu {
+func CreateTimeItems(newApp *App) *fyne.Menu {
+	var timeWindow fyne.Window
+
+	createNewClock := fyne.NewMenuItem("Watch current time", func() {
+		clock := widget.NewLabel("")
+		clock.TextStyle = fyne.TextStyle{
+			Monospace: true,
+			TabWidth:  20,
+		}
+		updateTime(clock)
+
+		go func() {
+			for range time.Tick(time.Second) {
+				updateTime(clock)
+			}
+		}()
+
+		timeWindow = newApp.App.NewWindow("Time")
+		timeWindow.SetContent(clock)
+		timeWindow.Show()
+	})
+
+	clockMenu := fyne.NewMenu("Time", createNewClock)
+
+	return clockMenu
+}
+
+func updateTime(clock *widget.Label) {
+	formatted := time.Now().Format("Time: 03:04:05")
+	clock.SetText(formatted)
+}
+
+func CreateTerminalItems(window fyne.Window, newApp *App, commandChan chan string, exitTerminal chan bool, X, Y float32) *fyne.Menu {
+	terminal := CreateTerminalWindow(newApp, commandChan, exitTerminal, 0, 150, window)
+	terminal.Resize(fyne.NewSize(X, Y))
 	createNewTerminal := fyne.NewMenuItem("Create", func() {
-		terminal := CreateTerminalWindow(newApp, commandChan, exitTerminal, 0, 150, window)
-		terminal.Resize(fyne.NewSize(X, Y))
 		terminal.Show()
 	})
 
 	selTerminalParams := fyne.NewMenuItem("Create (TODO)", func() {
-		terminal := CreateTerminalWindow(newApp, commandChan, exitTerminal, 0, 150, window)
-		terminal.Resize(fyne.NewSize(X, Y))
+		terminal.Show()
 	})
 
 	terminalMenuItem := fyne.NewMenuItem("Terminal", func() {})
