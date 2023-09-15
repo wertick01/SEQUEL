@@ -3,6 +3,7 @@ package main
 import (
 	"biolink-nipt-gui/internal/pkg"
 	protocol "biolink-nipt-gui/internal/protocols"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -11,10 +12,8 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -25,23 +24,20 @@ func main() {
 	mainWindow.Resize(fyne.NewSize(float32(displays[0]["X"])*0.9, float32(displays[0]["Y"])*0.9))
 
 	btn1 := widget.NewMultiLineEntry()
-	// btn1 := widget.NewButton("Button 1", func() {})
-	// btn1.Move(fyne.NewPos(0, 100))
+	btn1Grid := container.NewGridWrap(fyne.NewSize(800, 200), btn1)
 
-	// btn2 := widget.NewButton("Button 2", func() {})
-	// // btn2.Move(fyne.NewPos(0, 100))
-	// btn2.Resize(fyne.NewSize(30, 10))
+	buttonIcon := widget.NewMultiLineEntry()
+	buttonIconGrid := container.NewGridWrap(fyne.NewSize(800, 600), buttonIcon)
 
-	buttonIcon := canvas.NewImageFromFile("images/warning.png")
-
-	topBox := container.NewGridWithRows(2, btn1, buttonIcon)
+	topBox := container.NewGridWithRows(2, buttonIconGrid, btn1Grid)
+	// topBox := container.NewGridWrap(fyne.NewSize(800, 800), buttonIconGrid, btn1Grid)
 
 	// btn3 := widget.NewButton("Button 3", func() {})
-	form := OpenProtocolForm()
+	form := OpenProtocolForm(newApp)
 	// formBox := container.NewVBox(form)
 
-	cnt := container.New(layout.NewGridLayout(2), topBox, form)
-	// cnt := container.New
+	cnt := container.NewGridWithColumns(2, topBox, form)
+	// cnt := container.NewGridWrap(fyne.NewSize(float32(displays[0]["X"])*0.9, float32(displays[0]["Y"])*0.9), topBox, form)
 
 	mainWindow.SetContent(cnt)
 	mainWindow.Show()
@@ -87,7 +83,7 @@ type Stage struct {
 	ToolPath    *widget.FormItem
 }
 
-func OpenProtocolForm() *widget.Form {
+func OpenProtocolForm(newApp fyne.App) *widget.Form {
 	prt := protocol.NewProtocol()
 	filename, err := filepath.Abs("internal/protocols/test_protocol.yaml")
 	if err != nil {
@@ -106,21 +102,64 @@ func OpenProtocolForm() *widget.Form {
 
 	newEntryProtocol := new(Protocol)
 
-	version := widget.NewEntry()
-	version.SetText(protocol.Version)
+	version := widget.NewLabel(protocol.Version)
 	newEntryProtocol.Version = widget.NewFormItem("Version", version)
 
-	author := widget.NewEntry()
-	author.SetText(protocol.Author)
+	author := widget.NewLabel(protocol.Author)
 	newEntryProtocol.Author = widget.NewFormItem("Author", author)
 
-	createdAt := widget.NewEntry()
-	createdAt.SetText(protocol.CreatedAt.Format(time.RFC3339))
+	createdAt := widget.NewLabel(protocol.CreatedAt.Format(time.RFC3339))
 	newEntryProtocol.CreatedAt = widget.NewFormItem("Created at", createdAt)
 
-	updatedAt := widget.NewEntry()
-	updatedAt.SetText(protocol.UpdatedAt.Format(time.RFC3339))
+	updatedAt := widget.NewLabel(protocol.UpdatedAt.Format(time.RFC3339))
 	newEntryProtocol.UpdatedAt = widget.NewFormItem("Updated at", updatedAt)
+
+	updateTitle := widget.NewButton("Change", func() {
+		version := widget.NewEntry()
+		version.SetText(protocol.Version)
+		versionItem := widget.NewFormItem("Version", version)
+
+		author := widget.NewEntry()
+		author.SetText(protocol.Author)
+		authorItem := widget.NewFormItem("Author", author)
+
+		createdAt := widget.NewLabel(protocol.CreatedAt.Format(time.RFC3339))
+		createdAtItem := widget.NewFormItem("Created at", createdAt)
+
+		updatedAt := widget.NewLabel(protocol.UpdatedAt.Format(time.RFC3339))
+		updatedAtItem := widget.NewFormItem("Updated at", updatedAt)
+
+		updForm := widget.NewForm(
+			versionItem,
+			authorItem,
+			createdAtItem,
+			updatedAtItem,
+		)
+
+		// New Window
+		changeTitleWindow := newApp.NewWindow("Change protocol")
+		updForm.OnCancel = func() {
+			changeTitleWindow.Close()
+		}
+
+		updForm.OnSubmit = func() {
+			log.Println("SUBMITED")
+			prt, _ := ChangeProtocolTitle(map[string]*widget.Entry{
+				"Version": version,
+				"Author":  author,
+			})
+			frm := widget.NewForm(prt.Version, prt.Author, createdAtItem, prt.UpdatedAt)
+			subW := newApp.NewWindow("changed")
+			subW.SetContent(frm)
+			subW.Show()
+			changeTitleWindow.Close()
+		}
+		changeTitleWindow.Resize(fyne.NewSize(300, 200))
+		changeTitleWindow.SetContent(updForm)
+		changeTitleWindow.Show()
+	})
+	updateTitle.Resize(fyne.NewSize(30, 10))
+	updateItem := widget.NewFormItem("", updateTitle)
 
 	newEntryProtocol.Stages = make([]*Stage, 0)
 
@@ -144,7 +183,7 @@ func OpenProtocolForm() *widget.Form {
 		tool.SetText(stage.Tool)
 		newStage.Tool = widget.NewFormItem("Tool", tool)
 
-		description := widget.NewEntry()
+		description := widget.NewMultiLineEntry()
 		description.SetText(stage.Description)
 		newStage.Description = widget.NewFormItem("Description", description)
 
@@ -156,10 +195,12 @@ func OpenProtocolForm() *widget.Form {
 	}
 
 	// stages := widget.NewLabel("stages")
-	stages := container.NewVBox()
+	itms := make([]*widget.FormItem, 0)
+
+	a := 1
 
 	for _, val := range newEntryProtocol.Stages {
-		stages.Add(widget.NewForm(
+		it1 := widget.NewFormItem(fmt.Sprintf("Stage №%v", a), widget.NewForm(
 			val.Number,
 			val.Name,
 			val.Params,
@@ -167,18 +208,36 @@ func OpenProtocolForm() *widget.Form {
 			val.Description,
 			val.ToolPath,
 		))
-	}
-	// log.Println(version.Text, createdAt.Text)
+		itms = append(itms, it1)
 
-	stagesItem := widget.NewFormItem("Stages", stages)
+		a++
+	}
 
 	protocolForm := widget.NewForm(
 		newEntryProtocol.Version,
 		newEntryProtocol.Author,
-		newEntryProtocol.UpdatedAt,
 		newEntryProtocol.CreatedAt,
-		stagesItem,
+		newEntryProtocol.UpdatedAt,
+		updateItem,
+		// stagesItem,
+		itms[0],
+		itms[1],
 	)
 
 	return protocolForm
+}
+
+func ChangeProtocolTitle(prt map[string]*widget.Entry) (*Protocol, error) {
+	// for _, item := range prt.Items {
+	// 	e := widget.NewEntry()
+	// 	log.Println(item.Widget)
+	// }
+
+	changedProtocol := &Protocol{
+		Version:   widget.NewFormItem("Version", widget.NewLabel(prt["Version"].Text)),
+		Author:    widget.NewFormItem("Author", widget.NewLabel(prt["Author"].Text)),
+		UpdatedAt: widget.NewFormItem("UpdatedAt", widget.NewLabel(time.Now().Format(time.RFC3339))),
+	}
+
+	return changedProtocol, nil
 }
