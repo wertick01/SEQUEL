@@ -2,7 +2,6 @@ package app
 
 import (
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
 	"github.com/fyne-io/terminal"
 )
 
@@ -41,10 +40,10 @@ func CreateTerminalWindow(newApp *App, commandsChan chan string, exitRutine chan
 		}
 	}()
 
-	newVBox1 := container.NewVBox(t)
-	newVBox1.Resize(fyne.NewSize(X, Y))
-	newVBox1.Move(fyne.NewPos(0, 100))
-	window.SetContent(newVBox1)
+	// newVBox1 := container.NewVBox(t)
+	// newVBox1.Resize(fyne.NewSize(X, Y))
+	// newVBox1.Move(fyne.NewPos(0, 100))
+	// window.SetContent(newVBox1)
 
 	return terminalWindow
 }
