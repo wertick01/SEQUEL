@@ -1,6 +1,7 @@
 package app
 
 import (
+	"biolink-nipt-gui/internal/config"
 	"biolink-nipt-gui/internal/models"
 	"biolink-nipt-gui/internal/pkg"
 	"biolink-nipt-gui/internal/trimmomatic"
@@ -32,6 +33,7 @@ func Run() {
 }
 
 func (newApp *App) BuildMainWindow() {
+	config.GetConfig()
 	mainWindow := newApp.App.NewWindow("App")
 	displays := pkg.GetDisplayParams()
 	mainWindow.Resize(fyne.NewSize(float32(displays[0]["X"])*0.9, float32(displays[0]["Y"])*0.9))
@@ -89,6 +91,7 @@ func (newApp *App) BuildMainWindow() {
 	mainWindow.SetMaster()
 	newApp.App.Run()
 	terminalCloseChan <- true
+	return
 }
 
 func CreateTrimmomaticContainer(paired, single *widget.Button) *fyne.Container {

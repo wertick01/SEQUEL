@@ -2,9 +2,14 @@ package trimmomatic
 
 import (
 	"biolink-nipt-gui/internal/models"
+	"biolink-nipt-gui/internal/pkg"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"strconv"
+	"strings"
+	"sync"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -50,6 +55,9 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan
 	isCropChan := make(chan bool, 1)
 	isHeadCropChan := make(chan bool, 1)
 	isMinLenChan := make(chan bool, 1)
+
+	startProgressChan := make(chan bool, 1)
+	ratioChan := make(chan float64)
 
 	isClip := false
 	isSliding := false
@@ -99,7 +107,7 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan
 	phredItems := trimm.ChosePhred()
 	threadsEntry := trimm.ChoseThreads()
 	threadsEntryItem := widget.NewFormItem("Threads", threadsEntry)
-	logFileItem := trimm.SaveLogs()
+	logFileItem := trimm.SaveLogs(startProgressChan, ratioChan)
 
 	illuminaClip, fastaWithAdaptersEtc, seedMismatches, palindromeClipThreshold, simpleClipThreshold := trimm.CreateIlluminaClip(descriptionChan, isClipChan)
 	slidingWindow, windowSize, requiredQuality := trimm.CreateSlidingWindow(descriptionChan, isSlidingChan)
@@ -108,6 +116,9 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan
 	cropItem, crop := trimm.CreateCrop(descriptionChan, isCropChan)
 	headCropItem, headCrop := trimm.CreateHeadCrop(descriptionChan, isHeadCropChan)
 	minLenItem, minLen := trimm.CreateMinLen(descriptionChan, isMinLenChan)
+
+	progressBar := widget.NewProgressBar()
+	progressItem := widget.NewFormItem("Progress", progressBar)
 
 	go func() {
 		for {
@@ -134,6 +145,9 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan
 				isHeadCrop = headCropVal
 			case minLenVal := <-isMinLenChan:
 				isMinLen = minLenVal
+			case progress := <-ratioChan:
+				progressBar.Value = progress
+				progressBar.Refresh()
 			case <-exitRutine:
 				trimm.Params.Input = fmt.Sprintf("%v %v", forwardInput, reverseInput)
 				close(forwardChan)
@@ -147,6 +161,8 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan
 				close(isHeadCropChan)
 				close(isMinLenChan)
 				close(exitRutine)
+				close(startProgressChan)
+				close(ratioChan)
 				return
 			}
 		}
@@ -167,6 +183,7 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan
 		cropItem,
 		headCropItem,
 		minLenItem,
+		progressItem,
 	)
 
 	choseReadsForm.OnSubmit = func() {
@@ -214,18 +231,19 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan
 			}
 
 			trimm.Params.Threads = thrds
-			window.Close()
 			cmnd, err := trimm.BuildMainCommand()
 			if err != nil {
 				log.Println(err)
 			}
 			commandChan <- cmnd
+			startProgressChan <- true
 		}
 	}
 
-	// choseReadsForm.OnCancel = func() {
-	// 	window.Close()
-	// }
+	choseReadsForm.OnCancel = func() {
+		window.Close()
+		exitRutine <- true
+	}
 
 	return forwardSelected, reverseSelected, descriptionLabel, choseReadsForm
 }
@@ -247,6 +265,9 @@ func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan
 	isCropChan := make(chan bool, 1)
 	isHeadCropChan := make(chan bool, 1)
 	isMinLenChan := make(chan bool, 1)
+
+	startProgressChan := make(chan bool, 1)
+	ratioChan := make(chan float64)
 
 	isClip := false
 	isSliding := false
@@ -278,7 +299,7 @@ func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan
 	phredItems := trimm.ChosePhred()
 	threadsEntry := trimm.ChoseThreads()
 	threadsEntryItem := widget.NewFormItem("Threads", threadsEntry)
-	logFileItem := trimm.SaveLogs()
+	logFileItem := trimm.SaveLogs(startProgressChan, ratioChan)
 
 	illuminaClip, fastaWithAdaptersEtc, seedMismatches, palindromeClipThreshold, simpleClipThreshold := trimm.CreateIlluminaClip(descriptionChan, isClipChan)
 	slidingWindow, windowSize, requiredQuality := trimm.CreateSlidingWindow(descriptionChan, isSlidingChan)
@@ -287,6 +308,9 @@ func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan
 	cropItem, crop := trimm.CreateCrop(descriptionChan, isCropChan)
 	headCropItem, headCrop := trimm.CreateHeadCrop(descriptionChan, isHeadCropChan)
 	minLenItem, minLen := trimm.CreateMinLen(descriptionChan, isMinLenChan)
+
+	progressBar := widget.NewProgressBar()
+	progressItem := widget.NewFormItem("Progress", progressBar)
 
 	go func() {
 		for {
@@ -311,6 +335,9 @@ func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan
 				isHeadCrop = headCropVal
 			case minLenVal := <-isMinLenChan:
 				isMinLen = minLenVal
+			case progress := <-ratioChan:
+				progressBar.Value = progress
+				progressBar.Refresh()
 			case <-exitRutine:
 				close(readsChan)
 				close(descriptionChan)
@@ -322,6 +349,7 @@ func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan
 				close(isHeadCropChan)
 				close(isMinLenChan)
 				close(exitRutine)
+				close(startProgressChan)
 				return
 			}
 		}
@@ -340,6 +368,7 @@ func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan
 		cropItem,
 		headCropItem,
 		minLenItem,
+		progressItem,
 	)
 
 	choseReadsForm.OnSubmit = func() {
@@ -374,8 +403,6 @@ func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan
 				trimm.Params.SubParams.MinLen = fmt.Sprintf("MINLEN:%v", minLen.Text)
 			}
 
-			exitRutine <- true
-			window.Close()
 			trimm.Params.Paired = "SE"
 			thrds, err := strconv.Atoi(threadsEntry.Text)
 			if err != nil {
@@ -388,7 +415,14 @@ func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan
 				log.Println(err)
 			}
 			commandChan <- cmnd
+			startProgressChan <- true
+			// exitRutine <- true
 		}
+	}
+
+	choseReadsForm.OnCancel = func() {
+		window.Close()
+		exitRutine <- true
 	}
 
 	return selected, descriptionLabel, choseReadsForm
@@ -424,11 +458,11 @@ func (trimm *Trimmomatic) ChoseThreads() *widget.SelectEntry {
 	return selectThreadsCount
 }
 
-func (trimm *Trimmomatic) SaveLogs() *widget.FormItem {
+func (trimm *Trimmomatic) SaveLogs(startProgressChan chan bool, ratioChan chan float64) *widget.FormItem {
 	logFile := widget.NewCheck("logfile.log", func(b bool) {
 		if b {
 			trimm.Params.Logfile = trimm.Params.Output + "/logfile.log"
-			// trimm.CountLogFileLength("/home/mrred/Загрузки/ERR9792312.fastq.gz", trimm.Params.Logfile, "/home/mrred/Загрузки/")
+			trimm.CountLogFileLength(trimm.Params.Input, trimm.Params.Logfile, startProgressChan, ratioChan)
 		}
 	})
 	logFileItem := widget.NewFormItem("Save logs", logFile)
@@ -617,23 +651,38 @@ func (trimm *Trimmomatic) CreateMinLen(descrChan chan string, isMinLenChan chan 
 	return formItem, length
 }
 
-// func (trimm *Trimmomatic) CountLogFileLength(inputPath, logfilePath, target string) {
-// 	// inputFile, err := os.ReadFile(inputPath)
-// 	// file, err := os.Open(inputPath)
+func (trimm *Trimmomatic) CountLogFileLength(inputPath, logfilePath string, progressChan chan bool, ratioChan chan float64) {
+	inputLenChan := make(chan float64, 1)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		fp, r := pkg.Xopen(inputPath)
+		defer fp.Close()
 
-// 	// if err != nil {
-// 	// 	log.Fatal(err)
-// 	// }
+		n := float64(0)
+		var fqr pkg.FqReader
+		fqr.R = r
+		for _, done := fqr.Iter(); !done; _, done = fqr.Iter() {
+			n += 1
+		}
+		inputLenChan <- n
+	}()
 
-// 	// reader := fastq.NewReader(file, linear.NewQSeq("", nil, alphabet.DNAgapped, alphabet.Illumina1_3))
-// 	// r, err := reader.Read()
-// 	// log.Println(r, err)
-// 	go func() {
-// 		for {
-// 			time.Sleep(50 * time.Millisecond)
-// 			file, err := os.Stat(logfilePath)
-// 			log.Println(file.Size(), err)
-// 		}
-// 	}()
-// 	return
-// }
+	go func() {
+		wg.Wait()
+		length := <-inputLenChan
+		if <-progressChan {
+			for {
+				time.Sleep(50 * time.Millisecond)
+				file, err := ioutil.ReadFile(logfilePath)
+				if err != nil {
+					log.Println(err)
+				}
+				splt := strings.Split(string(file), "\n")
+				ratioChan <- float64(len(splt)) / length
+			}
+		}
+	}()
+	return
+}

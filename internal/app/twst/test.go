@@ -1,12 +1,11 @@
 package main
 
 import (
+	"biolink-nipt-gui/internal/pkg"
+	"fmt"
+	"io/ioutil"
 	"log"
-	"os"
-
-	"github.com/biogo/biogo/alphabet"
-	"github.com/biogo/biogo/io/seqio/fastq"
-	"github.com/biogo/biogo/seq/linear"
+	"strings"
 )
 
 // import (
@@ -251,22 +250,68 @@ import (
 // 	return changedProtocol, nil
 // }
 
+// func main() {
+// 	inputPath := "/home/mrred/Загрузки/ERR9792312.fastq.gz"
+
+// 	file, err := os.Open(inputPath)
+
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+
+// 	reader := fastq.NewReader(file, linear.NewQSeq("", nil, alphabet.DNA, alphabet.Illumina1_8))
+// 	r, err := reader.Read()
+// 	log.Println(r, err)
+// 	// go func() {
+// 	// 	time.Sleep(50 * time.Millisecond)
+// 	// 	file, err := os.Stat(path)
+
+// 	// }()
+// 	return
+// }
+
+// var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
 func main() {
-	inputPath := "/home/mrred/Загрузки/ERR9792312.fastq.gz"
+	// flag.Parse()
+	// if *cpuprofile != "" {
+	// 	f, err := os.Create(*cpuprofile)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// 	pprof.StartCPUProfile(f)
+	// 	defer pprof.StopCPUProfile()
+	// }
 
-	file, err := os.Open(inputPath)
-
+	file, err := ioutil.ReadFile("/home/mrred/Рабочий стол/Учёба/logfile.log")
 	if err != nil {
 		log.Fatal(err)
 	}
+	splt := strings.Split(string(file), "\n")
+	a := 0
+	for _, val := range splt {
+		a++
+		if len(val) == 0 {
+			a--
+		}
+	}
+	log.Println(a, splt[len(splt)-2])
 
-	reader := fastq.NewReader(file, linear.NewQSeq("", nil, alphabet.DNA, alphabet.Illumina1_8))
-	r, err := reader.Read()
-	log.Println(r, err)
-	// go func() {
-	// 	time.Sleep(50 * time.Millisecond)
-	// 	file, err := os.Stat(path)
+	fp, r := pkg.Xopen("/home/mrred/Загрузки/ERR9792312.fastq.gz")
+	defer fp.Close()
 
-	// }()
-	return
+	n := 0
+	var fqr pkg.FqReader
+	qual, seq := []string{}, []string{}
+
+	fqr.R = r
+	for r, done := fqr.Iter(); !done; r, done = fqr.Iter() {
+		n += 1
+		seq = append(seq, string(r.Seq))
+		qual = append(qual, string(r.Seq))
+		// sLen += int64(len(r.Seq)
+		// qLen += int64(len(r.Qual))
+	}
+	fmt.Println(n, "\t", len(seq), "\t", len(qual))
+	log.Println(seq[10:20])
 }
