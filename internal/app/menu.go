@@ -11,9 +11,9 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func CreateMainMenu(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool, displays map[int]map[string]int) *fyne.MainMenu {
+func CreateMainMenu(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitRootine chan bool, exitTerminal chan bool, displays map[int]map[string]int) *fyne.MainMenu {
 	fileMenu := CreateFileItems(window, trimm, newApp)
-	analysisMenu := CreateAnalysisItems(window, trimm, newApp, commandChan, exitTerminal)
+	analysisMenu := CreateAnalysisItems(window, trimm, newApp, commandChan, exitRootine, float32(displays[0]["X"])*0.7, float32(displays[0]["Y"])*0.6)
 
 	// commandsChan := make(chan string)
 	// closeTerminal := make(chan bool, 1)

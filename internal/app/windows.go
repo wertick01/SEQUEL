@@ -24,7 +24,6 @@ func CreateTerminalWindow(newApp *App, commandsChan chan string, exitRutine chan
 					// t.
 				}
 			case <-exitRutine:
-				close(commandsChan)
 				close(exitRutine)
 				return
 			}

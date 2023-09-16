@@ -72,26 +72,26 @@ func CreateFileItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp 
 	return fileMenu
 }
 
-func CreateAnalysisItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool) *fyne.Menu {
+func CreateAnalysisItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool, w, h float32) *fyne.Menu {
 	var subWindow fyne.Window
 
-	trymmomaticTool := CreateTrimmomaticAnalysisItems(subWindow, trimm, newApp, commandChan, exitTerminal)
+	trymmomaticTool := CreateTrimmomaticAnalysisItems(subWindow, trimm, newApp, commandChan, exitTerminal, w, h)
 
 	analysisMenu := fyne.NewMenu("Analysis", trymmomaticTool)
 
 	return analysisMenu
 }
 
-func CreateTrimmomaticAnalysisItems(subWindow fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool) *fyne.MenuItem {
+func CreateTrimmomaticAnalysisItems(subWindow fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool, w, h float32) *fyne.MenuItem {
 	pairedReads := fyne.NewMenuItem("Paired reads", func() {
 		subWindow = newApp.App.NewWindow("Choose paired reads")
-		subWindow.Resize(fyne.NewSize(1000, 700))
+		subWindow.Resize(fyne.NewSize(w, h))
 
-		fov, rev, reads := trimm.SelectPairedReadsFiles(subWindow, commandChan, exitTerminal)
-		// phredFormItem := trimm.ChosePhred()
+		fov, rev, description, reads := trimm.SelectPairedReadsFiles(subWindow, commandChan, exitTerminal)
 		subWindow.SetContent(container.NewVBox(
 			reads,
 			fov, rev,
+			description,
 		))
 		subWindow.CenterOnScreen()
 		subWindow.Show()
@@ -99,12 +99,13 @@ func CreateTrimmomaticAnalysisItems(subWindow fyne.Window, trimm *trimmomatic.Tr
 
 	singleReads := fyne.NewMenuItem("Single reads", func() {
 		subWindow = newApp.App.NewWindow("Choose single reads")
-		subWindow.Resize(fyne.NewSize(500, 300))
+		subWindow.Resize(fyne.NewSize(w, h))
 
-		selected, frm := trimm.SelectSingleReadsFiles(subWindow, commandChan, exitTerminal)
+		selected, description, frm := trimm.SelectSingleReadsFiles(subWindow, commandChan, exitTerminal)
 		subWindow.SetContent(container.NewVBox(
 			frm,
 			selected,
+			description,
 		))
 		// rect := canvas.NewRectangle(color.White)
 		// subWindow.SetContent(rect)
