@@ -1,6 +1,6 @@
 # SEQUEL Softwear
 
-![SEQUEL-White-logo.svg](:/3327f4e18e30478581ad80fedc5b9681)
+![SEQUEL LOGO](/images/logo/SEQUEL-Black-logo.svg "Подпись под картинкой")
 
 [comment]: <img src="images/logo/SEQUEL-White-logo.svg" alt="drawing" width="500"/>
 
