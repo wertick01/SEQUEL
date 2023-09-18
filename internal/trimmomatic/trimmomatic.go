@@ -35,7 +35,7 @@ func (trimm *Trimmomatic) CreateTrimmomaticWindow() fyne.Window {
 	return nil
 }
 
-func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan chan string, exitTerminat chan bool) (*widget.Label, *widget.Label, *widget.Label, *widget.Form) {
+func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan chan string) (*widget.Label, *widget.Label, *widget.Label, *widget.Form) {
 	trimm.Params.Input = ""
 	forwardInput, reverseInput := "", ""
 	forwardSelected := widget.NewLabel("")
@@ -186,6 +186,8 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan
 		progressItem,
 	)
 
+	choseReadsForm.SubmitText = "Run"
+
 	choseReadsForm.OnSubmit = func() {
 		switch {
 		case len(forwardInput) <= 0:
@@ -248,7 +250,7 @@ func (trimm *Trimmomatic) SelectPairedReadsFiles(window fyne.Window, commandChan
 	return forwardSelected, reverseSelected, descriptionLabel, choseReadsForm
 }
 
-func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan chan string, exitTerminat chan bool) (*widget.Label, *widget.Label, *widget.Form) {
+func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan chan string) (*widget.Label, *widget.Label, *widget.Form) {
 	trimm.Params.Input = ""
 	selected := widget.NewLabel("")
 	descriptionLabel := widget.NewLabel("")
@@ -370,6 +372,8 @@ func (trimm *Trimmomatic) SelectSingleReadsFiles(window fyne.Window, commandChan
 		minLenItem,
 		progressItem,
 	)
+
+	choseReadsForm.SubmitText = "Run"
 
 	choseReadsForm.OnSubmit = func() {
 		switch {

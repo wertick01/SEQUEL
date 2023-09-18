@@ -15,13 +15,6 @@ func CreateMainMenu(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *
 	fileMenu := CreateFileItems(window, trimm, newApp)
 	analysisMenu := CreateAnalysisItems(window, trimm, newApp, commandChan, exitRootine, float32(displays[0]["X"])*0.7, float32(displays[0]["Y"])*0.6)
 
-	// commandsChan := make(chan string)
-	// closeTerminal := make(chan bool, 1)
-	// defer close(commandsChan)
-	// defer close(closeTerminal)
-
-	// newVBox2 := container.NewVBox()
-
 	terminalMenu := CreateTerminalItems(window, newApp, commandChan, exitTerminal, float32(displays[0]["X"])*0.9, float32(displays[0]["Y"])*0.2)
 
 	timeMenu := CreateTimeItems(newApp)

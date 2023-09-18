@@ -1,11 +1,10 @@
 package main
 
 import (
-	"biolink-nipt-gui/internal/pkg"
+	"biolink-nipt-gui/internal/app/fastqc"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"strings"
+	"reflect"
 )
 
 // import (
@@ -272,46 +271,62 @@ import (
 
 // var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 
-func main() {
-	// flag.Parse()
-	// if *cpuprofile != "" {
-	// 	f, err := os.Create(*cpuprofile)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	pprof.StartCPUProfile(f)
-	// 	defer pprof.StopCPUProfile()
-	// }
+// func main() {
+// 	file, err := ioutil.ReadFile("/home/mrred/Рабочий стол/Учёба/logfile.log")
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	splt := strings.Split(string(file), "\n")
+// 	a := 0
+// 	for _, val := range splt {
+// 		a++
+// 		if len(val) == 0 {
+// 			a--
+// 		}
+// 	}
+// 	log.Println(a, splt[len(splt)-2])
 
-	file, err := ioutil.ReadFile("/home/mrred/Рабочий стол/Учёба/logfile.log")
-	if err != nil {
-		log.Fatal(err)
-	}
-	splt := strings.Split(string(file), "\n")
-	a := 0
-	for _, val := range splt {
-		a++
-		if len(val) == 0 {
-			a--
+// 	fp, r := pkg.Xopen("/home/mrred/Загрузки/ERR9792312.fastq.gz")
+// 	defer fp.Close()
+
+// 	n := 0
+// 	var fqr pkg.FqReader
+// 	qual, seq := []string{}, []string{}
+
+// 	fqr.R = r
+// 	for r, done := fqr.Iter(); !done; r, done = fqr.Iter() {
+// 		n += 1
+// 		seq = append(seq, string(r.Seq))
+// 		qual = append(qual, string(r.Seq))
+// 		// sLen += int64(len(r.Seq)
+// 		// qLen += int64(len(r.Qual))
+// 	}
+// 	fmt.Println(n, "\t", len(seq), "\t", len(qual))
+// 	log.Println(seq[10:20])
+// }
+
+func main() {
+	fastQC := *fastqc.New()
+	fastQC.Version.IsUsed = true
+	v := reflect.ValueOf(fastQC)
+	log.Println(v)
+
+	// v := reflect.ValueOf(fastQC)
+	// names := make([]string, 0, v.NumField())
+	// v.FieldByNameFunc(func(fieldName string) bool {
+	// 	names = append(names, fieldName)
+	// 	return false
+	// })
+	// log.Println(names)
+
+	for i := 0; i < v.NumField(); i++ {
+		if !v.Field(i).IsNil() {
+			if v.Field(i).Elem().FieldByName("IsUsed").Interface().(bool) {
+				log.Println(reflect.TypeOf(fastQC).Field(i).Name)
+				log.Println(fmt.Sprintf("%v %v", v.Field(i).Elem().FieldByName("Flag").Interface(), v.Field(i).Elem().FieldByName("Value").Interface()))
+			}
+			// log.Println(v.Field(i).
 		}
 	}
-	log.Println(a, splt[len(splt)-2])
-
-	fp, r := pkg.Xopen("/home/mrred/Загрузки/ERR9792312.fastq.gz")
-	defer fp.Close()
-
-	n := 0
-	var fqr pkg.FqReader
-	qual, seq := []string{}, []string{}
-
-	fqr.R = r
-	for r, done := fqr.Iter(); !done; r, done = fqr.Iter() {
-		n += 1
-		seq = append(seq, string(r.Seq))
-		qual = append(qual, string(r.Seq))
-		// sLen += int64(len(r.Seq)
-		// qLen += int64(len(r.Qual))
-	}
-	fmt.Println(n, "\t", len(seq), "\t", len(qual))
-	log.Println(seq[10:20])
+	return
 }

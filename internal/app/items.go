@@ -1,7 +1,9 @@
 package app
 
 import (
+	"biolink-nipt-gui/internal/app/fastqc"
 	"biolink-nipt-gui/internal/trimmomatic"
+	"fmt"
 	"log"
 	"time"
 
@@ -75,19 +77,23 @@ func CreateFileItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp 
 func CreateAnalysisItems(window fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool, w, h float32) *fyne.Menu {
 	var subWindow fyne.Window
 
-	trymmomaticTool := CreateTrimmomaticAnalysisItems(subWindow, trimm, newApp, commandChan, exitTerminal, w, h)
+	trymmomaticTool := CreateTrimmomaticAnalysisItems(subWindow, trimm, newApp, commandChan, w, h)
 
-	analysisMenu := fyne.NewMenu("Analysis", trymmomaticTool)
+	fastQCConfig := fastqc.New()
+	fastQCConfig.Icons = trimm.Icons
+	fastQCItems := CreateFastQCAnalysisItems(window, newApp, fastQCConfig, commandChan, w, h)
+
+	analysisMenu := fyne.NewMenu("Analysis", trymmomaticTool, fastQCItems)
 
 	return analysisMenu
 }
 
-func CreateTrimmomaticAnalysisItems(subWindow fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, exitTerminal chan bool, w, h float32) *fyne.MenuItem {
+func CreateTrimmomaticAnalysisItems(subWindow fyne.Window, trimm *trimmomatic.Trimmomatic, newApp *App, commandChan chan string, w, h float32) *fyne.MenuItem {
 	pairedReads := fyne.NewMenuItem("Paired reads", func() {
 		subWindow = newApp.App.NewWindow("Choose paired reads")
 		subWindow.Resize(fyne.NewSize(w, h))
 
-		fov, rev, description, reads := trimm.SelectPairedReadsFiles(subWindow, commandChan, exitTerminal)
+		fov, rev, description, reads := trimm.SelectPairedReadsFiles(subWindow, commandChan)
 		subWindow.SetContent(container.NewVBox(
 			reads,
 			fov, rev,
@@ -101,7 +107,7 @@ func CreateTrimmomaticAnalysisItems(subWindow fyne.Window, trimm *trimmomatic.Tr
 		subWindow = newApp.App.NewWindow("Choose single reads")
 		subWindow.Resize(fyne.NewSize(w, h))
 
-		selected, description, frm := trimm.SelectSingleReadsFiles(subWindow, commandChan, exitTerminal)
+		selected, description, frm := trimm.SelectSingleReadsFiles(subWindow, commandChan)
 		subWindow.SetContent(container.NewVBox(
 			frm,
 			selected,
@@ -123,6 +129,29 @@ func CreateTrimmomaticAnalysisItems(subWindow fyne.Window, trimm *trimmomatic.Tr
 	trymmomaticTool.ChildMenu = fyne.NewMenu("", trymmomatic035Tool, trymmomatic039Tool)
 
 	return trymmomaticTool
+}
+
+func CreateFastQCAnalysisItems(subWindow fyne.Window, newApp *App, fastQC *fastqc.FastQC, commandChan chan string, w, h float32) *fyne.MenuItem {
+	FastQCItem := fyne.NewMenuItem("FastQC", func() {
+		subWindow = newApp.App.NewWindow("FastQC")
+		subWindow.Resize(fyne.NewSize(w, h))
+
+		fastQCForm, description := fastQC.CreateFastQCForn(subWindow, commandChan)
+		subWindow.SetContent(container.NewVBox(
+			fastQCForm,
+			description,
+		))
+		subWindow.CenterOnScreen()
+		subWindow.Show()
+	})
+
+	fastQCV_0_11_9_Tool := fyne.NewMenuItem(fmt.Sprintf("%v %v", "FastQC", fastQC.Version.Value), nil)
+	fastQCV_0_11_9_Tool.ChildMenu = fyne.NewMenu("", FastQCItem)
+
+	FastQCTool := fyne.NewMenuItem("FastQC", nil)
+	FastQCTool.ChildMenu = fyne.NewMenu("", fastQCV_0_11_9_Tool)
+
+	return FastQCTool
 }
 
 func CreateTimeItems(newApp *App) *fyne.Menu {
